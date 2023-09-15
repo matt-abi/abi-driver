@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/ability-sh/abi-lib/json"
+	"github.com/matt-abi/abi-lib/json"
 	"gopkg.in/yaml.v2"
 )
 
