@@ -33,6 +33,8 @@ type routerItem struct {
 }
 
 type Router struct {
+	respHandlers map[string]micro.RespFunc
+	verifiers    map[string]micro.ReqVerifyFunc
 	items        []*routerItem
 	interceptors []*routeInterceptorItem
 	scheme       *RouteScheme
@@ -157,6 +159,14 @@ func (R *Router) Scheme(ctx micro.Context) micro.IScheme {
 	return R.scheme
 }
 
+func (R *Router) MatchRespHandler(ctx micro.Context, name string) micro.RespFunc {
+	return R.respHandlers[name]
+}
+
+func (R *Router) MatchReqVerify(ctx micro.Context, name string) micro.ReqVerifyFunc {
+	return R.verifiers[name]
+}
+
 func (R *Router) Interceptor(pattern *regexp.Regexp, interceptor func(ctx micro.Context, name string, data interface{}) error) *Router {
 	R.interceptors = append(R.interceptors, &routeInterceptorItem{Match: func(name string) (string, bool) {
 		if pattern.MatchString(name) {
@@ -164,5 +174,21 @@ func (R *Router) Interceptor(pattern *regexp.Regexp, interceptor func(ctx micro.
 		}
 		return "", false
 	}, Interceptor: interceptor})
+	return R
+}
+
+func (R *Router) RespHander(name string, handler micro.RespFunc) *Router {
+	if R.respHandlers == nil {
+		R.respHandlers = make(map[string]micro.RespFunc, 10)
+	}
+	R.respHandlers[name] = handler
+	return R
+}
+
+func (R *Router) ReqVerify(name string, verify micro.ReqVerifyFunc) *Router {
+	if R.verifiers == nil {
+		R.verifiers = make(map[string]micro.ReqVerifyFunc, 10)
+	}
+	R.verifiers[name] = verify
 	return R
 }

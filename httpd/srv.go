@@ -255,6 +255,18 @@ func Run(executor micro.Executor) error {
 
 			ctx.Step("input")("%+v", inputData)
 
+			// 参数校验
+			if executor, ok := executor.(micro.Verifier); ok {
+				verify := executor.MatchReqVerify(ctx, name)
+				if verify != nil {
+					err := verify(ctx, r, inputData)
+					if err != nil {
+						setErrorResponse(w, err)
+						return
+					}
+				}
+			}
+
 			rs, err := executor.Exec(ctx, name, inputData)
 
 			if err != nil {
@@ -262,8 +274,17 @@ func Run(executor micro.Executor) error {
 				return
 			}
 
-			setDataResponse(r, w, rs)
+			if executor, ok := executor.(micro.RespHandler); ok {
+				rHandler := executor.MatchRespHandler(ctx, name)
+				if rHandler != nil {
+					bl := rHandler(ctx, r, w, rs)
+					if bl {
+						return
+					}
+				}
+			}
 
+			setDataResponse(r, w, rs)
 			return
 		}
 
